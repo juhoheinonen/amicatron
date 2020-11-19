@@ -1,0 +1,92 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Post_an_Adaptive_Card_to_a_Teams_user_and_wait_for_a_response": {
+                "inputs": {
+                    "body": {
+                        "body": {
+                            "messageBody": "{\n    \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",\n    \"type\": \"AdaptiveCard\",\n    \"version\": \"1.0\",\n    \"body\": [\n        {\n            \"type\": \"Container\",\n            \"separation\": \"none\",\n            \"style\": \"default\",\n            \"items\": [\n                {\n                    \"type\": \"TextBlock\",\n                    \"text\": \"We appreciate your feedback\",\n                    \"weight\": \"Bolder\",\n                    \"size\": \"Large\"\n                }\n            ]\n        },\n        {\n            \"type\": \"Container\",\n            \"separation\": \"strong\",\n            \"style\": \"normal\",\n            \"items\": [\n                {\n                    \"type\": \"TextBlock\",\n                    \"text\": \"What's your current feeling at work and overall? \"\n                },\n                {\n                    \"type\": \"Input.ChoiceSet\",\n                    \"id\": \"chatSatisfaction\",\n                    \"style\": \"expanded\",\n                    \"isMultiSelect\": false,\n                    \"choices\": [\n                        {\n                            \"title\": \"⭐\",\n                            \"value\": \"1\"\n                        },\n                        {\n                            \"title\": \"⭐⭐\",\n                            \"value\": \"2\"\n                        },\n                        {\n                            \"title\": \"⭐⭐⭐\",\n                            \"value\": \"3\"\n                        },\n                        {\n                            \"title\": \"⭐⭐⭐⭐\",\n                            \"value\": \"4\"\n                        },\n                        {\n                            \"title\": \"⭐⭐⭐⭐⭐\",\n                            \"value\": \"5\"\n                        }\n                    ]\n                },\n                {\n                    \"type\": \"TextBlock\",\n                    \"text\": \"Tell us more:\"\n                },\n                {\n                    \"type\": \"Input.Text\",\n                    \"id\": \"tellUsMore\",\n                    \"placeholder\": \"Enter your feedback here\",\n                    \"isMultiline\": true\n                }\n            ]\n        }\n    ],\n    \"actions\": [\n        {\n            \"type\": \"Action.Submit\",\n            \"title\": \"Submit\"\n        }\n    ]\n}",
+                            "recipient": {
+                                "to": "@triggerBody()?['recipient']"
+                            },
+                            "shouldUpdateCard": true,
+                            "updateMessage": "Thanks for a feedback!"
+                        },
+                        "notificationUrl": "@{listCallbackUrl()}"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['teams']['connectionId']"
+                        }
+                    },
+                    "path": "/flowbot/actions/flowcontinuation/recipienttypes/user/$subscriptions"
+                },
+                "runAfter": {},
+                "type": "ApiConnectionWebhook"
+            },
+            "Send_an_email_(V2)": {
+                "inputs": {
+                    "body": {
+                        "Body": "<p>Response time: @{body('Post_an_Adaptive_Card_to_a_Teams_user_and_wait_for_a_response')['responseTime']}<br>\nEmail: @{body('Post_an_Adaptive_Card_to_a_Teams_user_and_wait_for_a_response')?['responder']?['email']}<br>\nUPN: @{body('Post_an_Adaptive_Card_to_a_Teams_user_and_wait_for_a_response')?['responder']?['userPrincipalName']}<br>\nDisplay name: @{body('Post_an_Adaptive_Card_to_a_Teams_user_and_wait_for_a_response')?['responder']?['displayName']}<br>\nSatisfaction: @{body('Post_an_Adaptive_Card_to_a_Teams_user_and_wait_for_a_response')?['data']?['chatSatisfaction']}<br>\nFeedback: @{body('Post_an_Adaptive_Card_to_a_Teams_user_and_wait_for_a_response')?['data']?['tellUsMore']}</p>",
+                        "Subject": "We got a feedback",
+                        "To": "kalle.marjokorpi@innofactor.com; juho.heinonen@innofactor.com"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['office365']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/v2/Mail"
+                },
+                "runAfter": {
+                    "Post_an_Adaptive_Card_to_a_Teams_user_and_wait_for_a_response": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "manual": {
+                "inputs": {
+                    "schema": {
+                        "properties": {
+                            "recipient": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "kind": "Http",
+                "type": "Request"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "office365": {
+                    "connectionId": "/subscriptions/2f6b84b7-13c0-45e5-bd6a-0a0cb89bd79b/resourceGroups/IF_Hackathon_2020/providers/Microsoft.Web/connections/office365",
+                    "connectionName": "office365",
+                    "id": "/subscriptions/2f6b84b7-13c0-45e5-bd6a-0a0cb89bd79b/providers/Microsoft.Web/locations/northeurope/managedApis/office365"
+                },
+                "teams": {
+                    "connectionId": "/subscriptions/2f6b84b7-13c0-45e5-bd6a-0a0cb89bd79b/resourceGroups/IF_Hackathon_2020/providers/Microsoft.Web/connections/teams",
+                    "connectionName": "teams",
+                    "id": "/subscriptions/2f6b84b7-13c0-45e5-bd6a-0a0cb89bd79b/providers/Microsoft.Web/locations/northeurope/managedApis/teams"
+                }
+            }
+        }
+    }
+}
